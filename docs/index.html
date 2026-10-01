@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
+    <title>LuCDA</title>
+    <meta
+      name="description"
+      content="把可疑的话发进来，看清楚它在做什么，拿到该怎么说。"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <!-- 顶栏：品牌字 + 演示样例入口。全产品只有它和下面两块，没有别的（执行指令 §8.1、铁律 5）。 -->
+    <header class="topbar">
+      <span class="brand">LuCDA</span>
+      <button id="demoBtn" class="top-btn" type="button">演示样例</button>
+    </header>
+
+    <!-- ① 发出去的东西 + ② AI 的回复。再发一条就往下接，不是会话列表（GOAL §2.1）。 -->
+    <main id="feed" class="feed" aria-live="polite"></main>
+
+    <!-- ③ 输入口：唯一的行动点。三种输入进同一个入口。 -->
+    <div class="composer" id="composer">
+      <div class="composer-inner">
+        <div class="paste" id="pasteArea" hidden>
+          <label class="paste-label" for="pasteInput">把他的话粘在这里</label>
+          <textarea
+            id="pasteInput"
+            class="paste-input"
+            rows="3"
+            autocomplete="off"
+            spellcheck="false"
+            placeholder="例：阿姨您就像我亲妈一样，这个胶囊是院士研发的"
+          ></textarea>
+          <div class="paste-actions">
+            <button id="sendBtn" class="btn btn-primary" type="button">
+              发出去
+            </button>
+            <button id="closePasteBtn" class="btn btn-ghost" type="button">
+              收起
+            </button>
+          </div>
+        </div>
+
+        <button id="micBtn" class="btn btn-primary" type="button">
+          🎤 按住说话
+        </button>
+        <div class="row2">
+          <button id="camBtn" class="btn btn-secondary" type="button">
+            📷 拍一下
+          </button>
+          <button id="pasteBtn" class="btn btn-secondary" type="button">
+            📋 粘贴文字
+          </button>
+        </div>
+
+        <input id="fileInput" type="file" accept="image/*" hidden />
+        <p class="composer-note" id="composerNote" hidden></p>
+      </div>
+    </div>
+
+    <!-- 浮层：原地覆盖，关掉回原处，全程不换屏（P9、§8.2）。只开一个，开新的自动关旧的。 -->
+    <div id="overlay" class="overlay" hidden>
+      <div class="ov-backdrop" data-close="1"></div>
+      <div
+        class="ov-panel"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="ovKicker"
+      >
+        <div class="ov-head">
+          <button id="ovClose" class="ov-btn" type="button">✕ 关掉</button>
+          <span class="ov-kicker" id="ovKicker">浮层</span>
+        </div>
+        <div class="ov-body" id="ovBody"></div>
+      </div>
+    </div>
+
+    <img id="imgProbe" alt="" hidden />
+    <script src="config.js"></script>
+    <script src="taboos.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>

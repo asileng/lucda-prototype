@@ -1,0 +1,599 @@
+/* worker/schema.js — 输出契约的运行时副本（由 schema/annotation.schema.json 生成）
+ *
+ * 为什么复制一份：Cloudflare Workers 运行时不能读仓库文件，JSON 模块导入在 node 与
+ * esbuild 两边都要额外开关。生成一份 JS 对象最省事，两边行为一致。
+ *
+ * 唯一真源仍是 schema/annotation.schema.json。改契约请改原文件，然后重跑生成：
+ *   node worker/gen_schema.mjs
+ * tools/worker_test.mjs 每次运行都会比对两份是否一致，不一致直接判失败。
+ */
+
+export const SCHEMA_SOURCE = "schema/annotation.schema.json";
+
+export const ANNOTATION_SCHEMA = {
+  $schema: "https://json-schema.org/draft/2020-12/schema",
+  $comment:
+    "LuCDA 标注契约。字段主体取自执行指令 §6.6 的 JSON 契约，三模态同构。★ 标记为规格其他条目明确要求、§6.6 骨架未单列的字段：★语域（§4.1 第④栏，6 栏之一）、★官方出口（§11 验收 7）、★正常说法对照（§9.4 与 §11 验收 12）、★证据的结构化形式（§6.5 三模态证据形式）。",
+  title: "LuCDA 标注契约（三模态同构）",
+  description:
+    "一次输入（text / audio / image）对应一份本文档描述的 JSON。三模态字段完全相同，只有 meta.模态 与 meta.证据单位 不同（执行指令 §6 铁律 6、§7.4）。每个标签必须带 证据，无证据的标签不得输出（§6.5）。本契约不判断信息真假（§1.3）。",
+  type: "object",
+  additionalProperties: false,
+  required: [
+    "meta",
+    "事件层",
+    "话语层",
+    "说服杠杆层",
+    "诊断",
+    "判定",
+    "策略",
+    "溯源",
+  ],
+  properties: {
+    meta: {
+      type: "object",
+      additionalProperties: false,
+      required: ["模态", "证据单位"],
+      description: "输入模态与证据计量单位。三模态唯一的差异点。",
+      properties: {
+        模态: {
+          enum: ["text", "audio", "image"],
+          description: "text=文字；audio=语音；image=图片。不做视频（§12）。",
+        },
+        证据单位: {
+          enum: ["原文", "时间轴", "区域"],
+          description:
+            "text→原文（字符区间）；audio→时间轴（起止秒）；image→区域（坐标）。映射见 §6.5 表。",
+        },
+      },
+      allOf: [
+        {
+          if: {
+            properties: {
+              模态: {
+                const: "text",
+              },
+            },
+            required: ["模态"],
+          },
+          then: {
+            properties: {
+              证据单位: {
+                const: "原文",
+              },
+            },
+          },
+        },
+        {
+          if: {
+            properties: {
+              模态: {
+                const: "audio",
+              },
+            },
+            required: ["模态"],
+          },
+          then: {
+            properties: {
+              证据单位: {
+                const: "时间轴",
+              },
+            },
+          },
+        },
+        {
+          if: {
+            properties: {
+              模态: {
+                const: "image",
+              },
+            },
+            required: ["模态"],
+          },
+          then: {
+            properties: {
+              证据单位: {
+                const: "区域",
+              },
+            },
+          },
+        },
+      ],
+    },
+    事件层: {
+      type: "array",
+      minItems: 1,
+      description: "谁对谁、想达到什么（§6.1、§6.2）。说话人是一等字段。",
+      items: {
+        type: "object",
+        additionalProperties: false,
+        required: ["说话人", "人物关系", "语用目标", "证据"],
+        properties: {
+          说话人: {
+            enum: ["推销者", "我", "第三人"],
+            description:
+              "推销者=施放话术的一方；我=使用者；第三人=输入中出现的其他说话人（在场亲友、直播间插话者等）。同一杠杆谁在说，意思相反（§6.2）。转述时，被转述的内容归属原说话人（§7.6 第②层）。",
+          },
+          人物关系: {
+            type: "string",
+            minLength: 1,
+            description:
+              "取值方向（§6.2）：陌生人 / 半熟（称「阿姨」「老师」）/ 拟亲属（称「闺女」「家人」）。填观察到的称呼方式，不做推断性判断。",
+          },
+          语用目标: {
+            type: "string",
+            minLength: 1,
+            description:
+              "取值方向（§6.2）：促成即时购买 / 建立信任 / 排除异议 / 促成复购。只填本段话在做什么。",
+          },
+          证据: {
+            $ref: "#/$defs/证据",
+          },
+        },
+      },
+    },
+    话语层: {
+      type: "array",
+      minItems: 0,
+      description: "话是怎么组织的（§6.1、§6.3）。维度四选一。",
+      items: {
+        type: "object",
+        additionalProperties: false,
+        required: ["说话人", "维度", "值", "证据"],
+        properties: {
+          说话人: {
+            enum: ["推销者", "我", "第三人"],
+            description: "该段话是谁说的，口径同事件层。",
+          },
+          维度: {
+            enum: ["三维框架", "预设", "信息确定性", "情绪引导"],
+            description:
+              "三维框架=对事件的命名、定性、评价方式；预设=未言明但被当作前提的内容；信息确定性=以断然表述替代概率；情绪引导=恐惧／内疚／希望／归属（§6.3）。",
+          },
+          值: {
+            type: "string",
+            minLength: 1,
+            description:
+              "该维度在这段话里具体落在哪里——写成可核对的观察，不写成评价。",
+          },
+          证据: {
+            $ref: "#/$defs/证据",
+          },
+        },
+      },
+    },
+    说服杠杆层: {
+      type: "array",
+      minItems: 0,
+      description:
+        "凭什么让你信（§6.1、§6.4）。六杠杆，强度 1–5，带归属。绿色判定时本层可为空数组。",
+      items: {
+        type: "object",
+        additionalProperties: false,
+        required: ["说话人", "杠杆", "强度", "归属", "证据"],
+        properties: {
+          说话人: {
+            enum: ["推销者", "我", "第三人"],
+            description:
+              "该条杠杆的话是谁说的。归属=已对我生效时只能来自我自己的话（§11 验收 14）。",
+          },
+          杠杆: {
+            enum: ["权威", "稀缺", "社会认同", "承诺一致", "互惠", "喜好"],
+            description: "六杠杆（§6.4）。判据见 schema/levers.md。",
+          },
+          强度: {
+            type: "integer",
+            minimum: 1,
+            maximum: 5,
+            description:
+              "1–5，逐级判据见 schema/levers.md。语音中同一承诺重复 ≥3 次直接判 5（§6.4）。",
+          },
+          归属: {
+            enum: ["正在施放", "已对我生效"],
+            description:
+              "正在施放=话是推销者说的；已对我生效=话是我说的，说明该杠杆已经起作用（§6.2、§6.4）。",
+          },
+          证据: {
+            $ref: "#/$defs/证据",
+          },
+        },
+        allOf: [
+          {
+            if: {
+              properties: {
+                归属: {
+                  const: "已对我生效",
+                },
+              },
+              required: ["归属"],
+            },
+            then: {
+              properties: {
+                说话人: {
+                  const: "我",
+                },
+              },
+              description:
+                "「已对我生效」类判定只能来自我自己的话（§6.2、§11 验收 14）。",
+            },
+          },
+        ],
+      },
+    },
+    诊断: {
+      type: "object",
+      additionalProperties: false,
+      required: ["被说到哪一步", "依据"],
+      description: "第二条信息流：我被说到哪一步（GOAL §3.3、执行指令 §9.6）。",
+      properties: {
+        被说到哪一步: {
+          type: "string",
+          minLength: 1,
+          description:
+            "一句短句描述进度，例如「已建立信任，还没掏钱」。只描述已发生的事。",
+        },
+        依据: {
+          type: "string",
+          minLength: 1,
+          description:
+            "依据必须指回我自己的话或输入中可见的动作，例如「我说出『我很信任他』」。",
+        },
+      },
+    },
+    判定: {
+      type: "object",
+      additionalProperties: false,
+      required: ["风险", "一句话", "触发规则", "说话人置信度"],
+      description: "风险等级与置信度。颜色只编码风险，不编码杠杆类型（§8.1）。",
+      properties: {
+        风险: {
+          enum: ["红", "黄", "绿"],
+          description:
+            "红=高风险；黄=需注意；绿=未发现操纵特征（主动输出，不是缺省，§9.4）。",
+        },
+        一句话: {
+          type: "string",
+          minLength: 1,
+          description:
+            "结论，写在回复底部横线之下。面向老人时越短越好（§8.1、§9.3）。",
+        },
+        触发规则: {
+          type: "string",
+          minLength: 1,
+          description:
+            "命中哪条规则、为什么判这个颜色。规则集见 schema/prompt_contract.md。",
+        },
+        说话人置信度: {
+          enum: ["高", "低"],
+          description:
+            "低时必须显著提示并给一键纠正，不允许静默错判（§7.6、§11 验收 13）。",
+        },
+        官方出口: {
+          type: "array",
+          minItems: 1,
+          items: {
+            enum: ["12315", "96110"],
+          },
+          description:
+            "★ §11 验收 7：高风险结果必有官方出口行。只给这两个渠道，不推荐任何同类商业工具（§12）。",
+        },
+        正常说法对照: {
+          type: "string",
+          minLength: 1,
+          description:
+            "★ §9.4：绿色结果必附「同类话题下正常商家会怎么说」的对照。只表征未发现操纵特征，不对产品背书，不得暗示可以买（§12）。",
+        },
+      },
+      allOf: [
+        {
+          if: {
+            properties: {
+              风险: {
+                const: "红",
+              },
+            },
+            required: ["风险"],
+          },
+          then: {
+            required: ["官方出口"],
+          },
+        },
+        {
+          if: {
+            properties: {
+              风险: {
+                const: "绿",
+              },
+            },
+            required: ["风险"],
+          },
+          then: {
+            required: ["正常说法对照"],
+          },
+        },
+      ],
+    },
+    策略: {
+      type: "object",
+      additionalProperties: false,
+      required: ["用户", "对抗者", "路径", "语域", "输出", "禁忌"],
+      description:
+        "说服策略 = f(用户, 对抗者)。必须填满 6 栏：① 用户 ② 对抗者 ③ 路径 ④ ★语域 ⑤ 输出 ⑥ 禁忌（§4.1）。缺第 ⑥ 栏即不合格（§11 验收 6）。矩阵见 schema/scenarios.md。",
+      properties: {
+        用户: {
+          enum: ["老人本人", "子女", "社区工作者", "当事人"],
+          description:
+            "第①栏。对应 §4.2 的四行：老人本人 / 子女 / 社区工作者·网格员 / 当事人（自己交涉）。",
+        },
+        对抗者: {
+          enum: [
+            "广告",
+            "推销员（面谈）",
+            "推销员（电话）",
+            "亲友",
+            "自己",
+            "亲友即推销者",
+            "平台客服",
+            "老人群体",
+          ],
+          description:
+            "第②栏。前七项对应 §4.3 的七行：广告（一并覆盖直播与包装，无交涉对象）／推销员（面谈）／推销员（电话）／亲友（含 §4.5 矩阵里的「父母」）／自己／亲友即推销者／平台·客服。第八项「老人群体」取自 §4.5 与 §5.3 中「社区工作者 × 老人（群体）」这一格，§4.3 的表未单列。参数从用户说的话里推断，不让用户选（§8.1）。",
+        },
+        路径: {
+          enum: ["中心", "边缘"],
+          description:
+            "第③栏。中心=讲理据；边缘=靠情感、社会规范、具体动作（§4.4）。路径由 (用户, 对抗者) 共同决定，见 schema/scenarios.md 的矩阵。",
+        },
+        语域: {
+          type: "string",
+          minLength: 1,
+          description:
+            "★ 第④栏（§4.2）。例如「口语、短句、零术语」「日常语、可复述」「半专业、可对外引用」「短、能直接念出口」。",
+        },
+        输出: {
+          type: "array",
+          minItems: 1,
+          description:
+            "★ 第⑤栏（§4.2、§9）。形态三选一：问题 / 脚本 / 一句话。三种模式形态互不相同（§11 验收 5）。",
+          items: {
+            type: "object",
+            additionalProperties: false,
+            required: ["形态", "内容"],
+            properties: {
+              形态: {
+                enum: ["问题", "脚本", "一句话"],
+                description:
+                  "问题=A 对质（§9.1）；脚本=B 帮劝（§9.2）；一句话=自护（§9.3）。",
+              },
+              序号: {
+                type: "integer",
+                minimum: 1,
+                maximum: 6,
+                description: "问题清单按序，共 6 个（§9.1）。",
+              },
+              内容: {
+                type: "string",
+                minLength: 1,
+                description:
+                  "可直接念出口的文本。问题与一句话 ≤15 字 / ≤12 字（§9.1、§9.3）。",
+              },
+              他可能怎么答: {
+                type: "string",
+                minLength: 1,
+                description: "§9.1 结构：每条问题后挂「他可能怎么答」。",
+              },
+              你再问: {
+                type: "string",
+                minLength: 1,
+                description: "§9.1 结构：接在「他可能怎么答」之后。",
+              },
+            },
+            allOf: [
+              {
+                if: {
+                  properties: {
+                    形态: {
+                      const: "问题",
+                    },
+                  },
+                  required: ["形态"],
+                },
+                then: {
+                  required: ["序号"],
+                },
+              },
+            ],
+          },
+        },
+        禁忌: {
+          type: "array",
+          minItems: 1,
+          items: {
+            type: "string",
+            minLength: 1,
+          },
+          description:
+            "★ 第⑥栏（§4.1、§5.3）。写这一格绝不能说的那句话，写成可直接比对的字面串。词表与组合禁忌见 schema/taboos.md，扫描在送出前执行（§5.5）。",
+        },
+      },
+      allOf: [
+        {
+          if: {
+            properties: {
+              对抗者: {
+                const: "广告",
+              },
+            },
+            required: ["对抗者"],
+          },
+          then: {
+            description:
+              "§4.3、§12：无交涉对象，只做识别 + 自保，绝不出问题清单。",
+            properties: {
+              输出: {
+                items: {
+                  not: {
+                    properties: {
+                      形态: {
+                        const: "问题",
+                      },
+                    },
+                    required: ["形态"],
+                  },
+                },
+              },
+            },
+          },
+        },
+        {
+          if: {
+            properties: {
+              对抗者: {
+                const: "亲友即推销者",
+              },
+            },
+            required: ["对抗者"],
+          },
+          then: {
+            description:
+              "§9.1、§12：不适用质证，归入帮劝变体（关系优先，不质证）。",
+            properties: {
+              输出: {
+                items: {
+                  not: {
+                    properties: {
+                      形态: {
+                        const: "问题",
+                      },
+                    },
+                    required: ["形态"],
+                  },
+                },
+              },
+            },
+          },
+        },
+      ],
+    },
+    溯源: {
+      type: "array",
+      minItems: 1,
+      description:
+        "依据三层（§6.7）：L1 理论 → L2 文献 → L3 语料例证。溯源不出的内容必须删掉，不得输出（§2 铁律 2）。",
+      items: {
+        type: "object",
+        additionalProperties: false,
+        required: ["断言", "理论", "文献", "语料例证"],
+        properties: {
+          断言: {
+            type: "string",
+            minLength: 1,
+            description: "本条依据支持的是哪一条断言，写成一句可核对的话。",
+          },
+          理论: {
+            type: "string",
+            minLength: 1,
+            description:
+              "L1：触发了哪个概念（预设 / 信息确定性 / 情绪引导 / 三维框架 / 加工路径 / 六杠杆）。",
+          },
+          文献: {
+            $ref: "#/$defs/文献",
+          },
+          语料例证: {
+            type: "string",
+            minLength: 1,
+            description:
+              "L3：同类真实片段（脱敏）。语料加工完成前用自建样例并注明「自建样例（语料加工未完成）」（§10.4）。",
+          },
+        },
+      },
+    },
+  },
+  $defs: {
+    证据: {
+      $comment:
+        "§6.5：证据要指向输入中的具体位置。允许两种写法——§6.6 骨架的字符串写法，以及复合写法（位置 + 片段 + 模态独占观察）。两种写法都不得为空。",
+      oneOf: [
+        {
+          type: "string",
+          minLength: 1,
+        },
+        {
+          $ref: "#/$defs/证据对象",
+        },
+      ],
+    },
+    证据对象: {
+      type: "object",
+      additionalProperties: false,
+      required: ["位置", "片段"],
+      description:
+        "复合证据。位置用 meta.证据单位 计量：文本=字符区间；语音=起止秒；图片=区域坐标。",
+      properties: {
+        位置: {
+          type: "string",
+          minLength: 1,
+          description:
+            "文本写「12-26」；语音写「12.4-15.1」（秒）；图片写「x1,y1,x2,y2」。",
+        },
+        片段: {
+          type: "string",
+          minLength: 1,
+          description: "原话 / 转写片段 / 该区域的文字或元素描述。",
+        },
+        观察: {
+          type: "array",
+          items: {
+            type: "string",
+            minLength: 1,
+          },
+          description:
+            "模态独占观察的落点（§7.2、§7.3）：语音填语速、同一承诺重复次数、音量变化、停顿位置；图片填资质的有没有、专家形象元素、价格牌与赠品、字幕与画面文字是否一致、承诺强度与资质表述是否匹配。文本填转述标记一类的形态观察。",
+        },
+      },
+    },
+    文献条目: {
+      type: "object",
+      additionalProperties: false,
+      required: ["标题", "作者", "年份"],
+      properties: {
+        标题: {
+          type: "string",
+          minLength: 1,
+        },
+        作者: {
+          type: "string",
+          minLength: 1,
+        },
+        年份: {
+          type: "integer",
+          minimum: 1900,
+          maximum: 2100,
+        },
+        索引ID: {
+          type: "string",
+          minLength: 1,
+          description:
+            "指向 data/rag_index.json 的文献层条目，供浮层里第二次点击打开全文出处（§11 验收 3）。",
+        },
+      },
+    },
+    文献: {
+      $comment:
+        "§6.7 L2：标题 + 作者 + 年份。允许字符串简写，或结构化条目数组。",
+      oneOf: [
+        {
+          type: "string",
+          minLength: 1,
+        },
+        {
+          type: "array",
+          minItems: 1,
+          items: {
+            $ref: "#/$defs/文献条目",
+          },
+        },
+      ],
+    },
+  },
+};

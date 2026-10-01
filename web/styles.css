@@ -1,0 +1,917 @@
+/* web/styles.css — LuCDA 唯一界面（执行指令 §8.1）
+ *
+ * 硬约束落点（数值可判定）：
+ *   · 主按钮高 ≥ 88px，全宽（P3）
+ *   · 正文 ≥ 24px，行距 ≥ 1.8（P3）
+ *   · 任意可点热区高 ≥ 64px（P3）——输入口三个按钮、每个色块、官出口行、浮层按钮
+ *   · 色块 = 低饱和底色 + 左侧 4px 竖条，不用高饱和荧光色（§8.1）
+ *   · 颜色只编码风险（红 / 黄 / 绿），杠杆类型不进颜色（§8.1）
+ *   · 结论 ≥ 28px，位于回复底部一条横线之下（§8.1）
+ *   · 浮层覆盖、不挤压不重排正文（P9、§8.2）
+ *   · 大字号、高对比、尊重 prefers-reduced-motion
+ *   · 零 CDN、系统字体栈（离线必须能用）
+ *
+ * 中性色（--n-*）用于「不是风险判定」的内容（演示样例说明、依据查询、状态提示）。
+ * 它不是第四种风险色，也不表示风险等级：风险仍只有 红 / 黄 / 绿 三值。
+ */
+
+:root {
+ --ink: #17181a;
+ --ink-2: #3d4046;
+ --ink-3: #5c6068;
+ --bg: #f3f3f5;
+ --card: #ffffff;
+ --line: #d9dade;
+ --line-strong: #b9bbc1;
+
+ /* 风险色：底色低饱和，竖条用同一色相的深色（不用荧光） */
+ --b-red: #fbecea;
+ --s-red: #b13226;
+ --t-red: #7d2318;
+ --b-yellow: #fbf2e0;
+ --s-yellow: #a9761a;
+ --t-yellow: #6f4c0c;
+ --b-green: #ebf4ec;
+ --s-green: #2f7a4e;
+ --t-green: #1e5335;
+ --b-neutral: #f0f1f4;
+ --s-neutral: #676c76;
+ --t-neutral: #3d4046;
+
+ --focus: #1c3f8f;
+ --tap: 64px;
+ --radius: 14px;
+}
+
+* {
+ box-sizing: border-box;
+}
+
+html {
+ -webkit-text-size-adjust: 100%;
+}
+
+body {
+ margin: 0;
+ background: var(--bg);
+ color: var(--ink);
+ font-family:
+  -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei", "微软雅黑",
+  "PingFang SC", "Hiragino Sans GB", "Source Han Sans SC", "Noto Sans CJK SC",
+  sans-serif;
+ font-size: 24px;
+ line-height: 1.8;
+ padding-bottom: 250px; /* 给底部输入口留位；粘贴态由 .paste-open 调大 */
+}
+body.paste-open {
+ padding-bottom: 470px;
+}
+
+/* 尊重 prefers-reduced-motion：关掉所有过渡与动画 */
+@media (prefers-reduced-motion: reduce) {
+ *,
+ *::before,
+ *::after {
+  transition: none !important;
+  animation: none !important;
+ }
+}
+
+/* ===== 顶栏 ===== */
+/* 只有两件东西：品牌字、演示样例入口。不放任何别的控制件（首屏元素可数，铁律 5）。 */
+.topbar {
+ max-width: 720px;
+ margin: 0 auto;
+ padding: 10px 16px 4px;
+ display: flex;
+ align-items: center;
+ justify-content: space-between;
+ gap: 12px;
+}
+.brand {
+ font-size: 20px;
+ letter-spacing: 0.06em;
+ color: var(--ink-3);
+}
+.top-btn {
+ min-height: var(--tap);
+ padding: 0 18px;
+ font-family: inherit;
+ font-size: 21px;
+ color: var(--ink-2);
+ background: var(--card);
+ border: 1px solid var(--line-strong);
+ border-radius: var(--radius);
+ cursor: pointer;
+}
+.top-btn:focus-visible,
+.btn:focus-visible,
+.blk:focus-visible,
+.ov-btn:focus-visible,
+.q-item:focus-visible,
+.choice:focus-visible,
+summary:focus-visible {
+ outline: 4px solid var(--focus);
+ outline-offset: 3px;
+}
+
+/* ===== 信息流：① 发出去的东西 ② AI 的回复 ===== */
+.feed {
+ max-width: 720px;
+ margin: 0 auto;
+ padding: 4px 16px 24px;
+}
+.turn + .turn {
+ margin-top: 34px;
+}
+
+/* ① 发出去的东西 */
+.sent {
+ background: var(--card);
+ border: 1px solid var(--line);
+ border-radius: var(--radius);
+ padding: 10px 16px 14px;
+}
+.sent-kicker {
+ font-size: 19px;
+ color: var(--ink-3);
+ line-height: 1.5;
+}
+.sent-body {
+ font-size: 24px;
+ line-height: 1.8;
+ white-space: pre-wrap;
+ word-break: break-word;
+ color: var(--ink-2);
+ margin-top: 2px;
+}
+.sent-body img {
+ display: block;
+ width: 100%;
+ height: auto;
+ max-height: 300px;
+ object-fit: contain;
+ border-radius: 10px;
+ margin-top: 8px;
+ background: #eaeaea;
+}
+.sent-missing {
+ font-size: 21px;
+ color: var(--ink-3);
+ border: 1px dashed var(--line-strong);
+ border-radius: 10px;
+ padding: 10px 12px;
+ margin-top: 8px;
+}
+
+/* ② AI 的回复 */
+.reply {
+ margin-top: 14px;
+}
+
+/* 演示样例标识（不是实时结果，必须看得见） */
+.sample-tag {
+ background: var(--b-neutral);
+ border-left: 4px solid var(--s-neutral);
+ border-radius: 8px;
+ padding: 6px 14px;
+ font-size: 20px;
+ line-height: 1.6;
+ color: var(--t-neutral);
+ margin-bottom: 12px;
+}
+
+/* 说话人置信度低 → 显著提示（§7.6、验收 13） */
+.warn {
+ background: var(--b-yellow);
+ border: 3px solid var(--s-yellow);
+ border-radius: var(--radius);
+ padding: 14px 16px;
+ margin-bottom: 14px;
+}
+.warn-head {
+ font-size: 26px;
+ font-weight: 700;
+ color: var(--t-yellow);
+ line-height: 1.5;
+}
+.warn-sub {
+ font-size: 21px;
+ color: var(--t-yellow);
+ line-height: 1.6;
+ margin-top: 4px;
+}
+.warn-fix {
+ margin-top: 10px;
+ border-top: 1px solid var(--s-yellow);
+ padding-top: 10px;
+}
+.fix-row {
+ display: flex;
+ flex-wrap: wrap;
+ align-items: center;
+ gap: 10px;
+ padding: 6px 0;
+}
+.fix-text {
+ flex: 1 1 100%;
+ font-size: 23px;
+ color: var(--ink);
+ word-break: break-word;
+}
+
+/* ===== 色块（锚点）：低饱和底色 + 左侧 4px 竖条 ===== */
+.blk {
+ display: block;
+ width: 100%;
+ text-align: left;
+ font-family: inherit;
+ border: none;
+ border-left: 4px solid var(--s-neutral);
+ border-radius: 10px;
+ background: var(--b-neutral);
+ color: var(--ink);
+ padding: 14px 16px;
+ min-height: var(--tap);
+ margin: 0 0 12px;
+ cursor: pointer;
+}
+.blk:last-child {
+ margin-bottom: 0;
+}
+.blk--红 {
+ background: var(--b-red);
+ border-left-color: var(--s-red);
+}
+.blk--黄 {
+ background: var(--b-yellow);
+ border-left-color: var(--s-yellow);
+}
+.blk--绿 {
+ background: var(--b-green);
+ border-left-color: var(--s-green);
+}
+.blk--中性 {
+ background: var(--b-neutral);
+ border-left-color: var(--s-neutral);
+}
+
+.blk-quote {
+ font-size: 25px;
+ line-height: 1.7;
+ color: var(--ink);
+ word-break: break-word;
+}
+.blk-meta {
+ display: flex;
+ flex-wrap: wrap;
+ align-items: center;
+ gap: 8px;
+ margin-top: 6px;
+}
+.tag {
+ display: inline-block;
+ font-size: 19px;
+ line-height: 1.5;
+ padding: 2px 10px;
+ border-radius: 999px;
+ background: rgba(255, 255, 255, 0.75);
+ border: 1px solid var(--line-strong);
+ color: var(--ink-2);
+}
+.tag--who {
+ font-weight: 700;
+}
+.blk--红 .tag--who {
+ color: var(--t-red);
+}
+.blk--黄 .tag--who {
+ color: var(--t-yellow);
+}
+.blk--绿 .tag--who {
+ color: var(--t-green);
+}
+.tag--ev {
+ font-variant-numeric: tabular-nums;
+}
+
+/* ===== 回复底部：一条横线 + 一句话结论（≥28px） ===== */
+.rule {
+ border: none;
+ border-top: 3px solid var(--ink);
+ margin: 20px 0 14px;
+}
+.conclusion {
+ font-size: 30px;
+ line-height: 1.6;
+ font-weight: 700;
+ color: var(--ink);
+}
+
+/* 官方出口行（高风险必有；只给官方渠道，不推荐任何同类工具） */
+.official {
+ margin-top: 14px;
+ background: var(--b-red);
+ border-left: 4px solid var(--s-red);
+ border-radius: 10px;
+ padding: 12px 16px;
+ font-size: 24px;
+ line-height: 1.6;
+ color: var(--t-red);
+}
+.official b {
+ font-size: 27px;
+}
+.official span {
+ white-space: nowrap;
+}
+
+/* 绿色：正常说法对照（主动输出，不是缺省） */
+.normal {
+ margin-top: 14px;
+ background: var(--b-green);
+ border-left: 4px solid var(--s-green);
+ border-radius: 10px;
+ padding: 12px 16px;
+ font-size: 24px;
+ line-height: 1.6;
+ color: var(--t-green);
+}
+
+/* 自我诊断块（§9.6） */
+.selfcheck {
+ margin-top: 16px;
+ background: var(--card);
+ border: 1px solid var(--line-strong);
+ border-radius: var(--radius);
+ padding: 12px 16px 16px;
+}
+.selfcheck h3 {
+ margin: 0 0 6px;
+ font-size: 22px;
+ color: var(--ink-3);
+ font-weight: 700;
+}
+.selfcheck .step {
+ font-size: 27px;
+ line-height: 1.7;
+ font-weight: 700;
+}
+.selfcheck .why {
+ font-size: 22px;
+ line-height: 1.7;
+ color: var(--ink-2);
+ margin-top: 6px;
+}
+.selfcheck ul {
+ margin: 6px 0 0;
+ padding-left: 26px;
+ font-size: 23px;
+ line-height: 1.7;
+}
+.ask-self {
+ margin-top: 12px;
+ border-top: 1px dashed var(--line-strong);
+ padding-top: 10px;
+ font-size: 26px;
+ line-height: 1.7;
+ font-weight: 700;
+}
+.ask-self .k {
+ display: block;
+ font-size: 20px;
+ font-weight: 400;
+ color: var(--ink-3);
+}
+
+/* ===== 策略输出三形态 ===== */
+.output {
+ margin-top: 18px;
+}
+.output h3 {
+ margin: 0 0 8px;
+ font-size: 22px;
+ color: var(--ink-3);
+ font-weight: 700;
+}
+
+/* A 对质：6 个问题，按序，可念出口 */
+.q-item {
+ display: block;
+ width: 100%;
+ text-align: left;
+ font-family: inherit;
+ background: var(--card);
+ border: 1px solid var(--line-strong);
+ border-radius: var(--radius);
+ padding: 12px 16px;
+ min-height: var(--tap);
+ margin-bottom: 10px;
+ cursor: pointer;
+ color: var(--ink);
+}
+.q-no {
+ font-size: 20px;
+ color: var(--ink-3);
+ line-height: 1.5;
+}
+.q-ask {
+ font-size: 29px;
+ line-height: 1.6;
+ font-weight: 700;
+}
+.q-follow {
+ font-size: 22px;
+ line-height: 1.7;
+ color: var(--ink-2);
+ margin-top: 4px;
+}
+.q-follow em {
+ font-style: normal;
+ color: var(--ink-3);
+}
+
+/* B 帮劝：脚本分段 */
+.script-seg {
+ background: var(--card);
+ border: 1px solid var(--line-strong);
+ border-left: 4px solid var(--s-neutral);
+ border-radius: 10px;
+ padding: 12px 16px;
+ margin-bottom: 10px;
+}
+.script-seg .seg-no {
+ font-size: 20px;
+ color: var(--ink-3);
+ line-height: 1.5;
+}
+.script-seg .seg-body {
+ font-size: 24px;
+ line-height: 1.8;
+ white-space: pre-wrap;
+ word-break: break-word;
+}
+
+/* C 自护：一句话 + 一个动作，大字，可朗读 */
+.oneline {
+ background: var(--card);
+ border: 1px solid var(--line-strong);
+ border-radius: var(--radius);
+ padding: 12px 16px;
+ margin-bottom: 10px;
+}
+.oneline .one-body {
+ font-size: 30px;
+ line-height: 1.6;
+ font-weight: 700;
+}
+
+/* 禁忌提示（第 ⑥ 栏，必须出现） */
+.forbid {
+ background: var(--b-neutral);
+ border-left: 4px solid var(--s-neutral);
+ border-radius: 10px;
+ padding: 12px 16px;
+ margin-top: 12px;
+}
+.forbid .fh {
+ font-size: 21px;
+ color: var(--ink-3);
+ line-height: 1.5;
+}
+.forbid ul {
+ margin: 6px 0 0;
+ padding-left: 26px;
+ font-size: 24px;
+ line-height: 1.7;
+}
+.forbid li {
+ color: var(--ink);
+}
+
+/* 依据（理论 / 文献 / 语料例证）：默认折叠，点开即见 */
+.evidence {
+ margin-top: 14px;
+}
+.evidence > summary {
+ min-height: var(--tap);
+ display: flex;
+ align-items: center;
+ font-size: 24px;
+ color: var(--ink-2);
+ cursor: pointer;
+ border: 1px solid var(--line-strong);
+ border-radius: var(--radius);
+ background: var(--card);
+ padding: 0 16px;
+ list-style: none;
+}
+.evidence > summary::-webkit-details-marker {
+ display: none;
+}
+.evidence[open] > summary {
+ border-bottom-left-radius: 0;
+ border-bottom-right-radius: 0;
+}
+.ev-body {
+ border: 1px solid var(--line-strong);
+ border-top: none;
+ border-radius: 0 0 var(--radius) var(--radius);
+ background: var(--card);
+ padding: 12px 16px;
+}
+.ev-l {
+ font-size: 20px;
+ color: var(--ink-3);
+ line-height: 1.5;
+ margin-top: 10px;
+}
+.ev-l:first-child {
+ margin-top: 0;
+}
+.ev-t {
+ font-size: 23px;
+ line-height: 1.7;
+}
+.ev-src {
+ font-size: 20px;
+ color: var(--ink-3);
+ line-height: 1.6;
+}
+.ev-link {
+ font-family: inherit;
+ font-size: 20px;
+ min-height: var(--tap);
+ padding: 0 12px;
+ margin-top: 6px;
+ background: var(--bg);
+ border: 1px solid var(--line-strong);
+ border-radius: 10px;
+ color: var(--ink-2);
+ cursor: pointer;
+ text-align: left;
+ width: 100%;
+}
+
+/* 常驻两行小字（能力边界 + 免责；执行指令 §1.2、§7.5） */
+.notice {
+ margin-top: 14px;
+ border-top: 1px solid var(--line);
+ padding-top: 8px;
+ font-size: 19px;
+ line-height: 1.6;
+ color: var(--ink-3);
+}
+.notice p {
+ margin: 0;
+}
+
+/* 中性提示（离线、降级、连不上出口、没找到依据）——不冒充判定 */
+.note {
+ background: var(--b-neutral);
+ border-left: 4px solid var(--s-neutral);
+ border-radius: 10px;
+ padding: 12px 16px;
+ font-size: 22px;
+ line-height: 1.7;
+ color: var(--t-neutral);
+ margin-top: 12px;
+}
+.note .nt {
+ font-weight: 700;
+}
+
+/* 「你要跟谁说？」的选择行（§8.4：只在推断不出时问一次，系统先猜并高亮） */
+.ask {
+ margin-top: 14px;
+ background: var(--card);
+ border: 2px solid var(--line-strong);
+ border-radius: var(--radius);
+ padding: 12px 16px 16px;
+}
+.ask h3 {
+ margin: 0 0 4px;
+ font-size: 24px;
+ font-weight: 700;
+}
+.ask .ask-sub {
+ font-size: 21px;
+ color: var(--ink-3);
+ line-height: 1.6;
+}
+.choices {
+ display: flex;
+ flex-direction: column;
+ gap: 10px;
+ margin-top: 10px;
+}
+.choice {
+ font-family: inherit;
+ font-size: 24px;
+ text-align: left;
+ min-height: var(--tap);
+ padding: 8px 16px;
+ border-radius: var(--radius);
+ border: 2px solid var(--line-strong);
+ background: var(--card);
+ color: var(--ink);
+ cursor: pointer;
+}
+.choice[aria-pressed="true"] {
+ border-color: var(--focus);
+ background: #eef2fc;
+ font-weight: 700;
+}
+.choice small {
+ display: block;
+ font-size: 19px;
+ color: var(--ink-3);
+}
+
+/* ===== 输入口：唯一的行动点（③） ===== */
+.composer {
+ position: fixed;
+ left: 0;
+ right: 0;
+ bottom: 0;
+ background: linear-gradient(
+  to bottom,
+  rgba(243, 243, 245, 0.86),
+  var(--bg) 26%
+ );
+ border-top: 1px solid var(--line);
+ padding: 12px 16px calc(12px + env(safe-area-inset-bottom, 0px));
+ z-index: 20;
+}
+.composer-inner {
+ max-width: 720px;
+ margin: 0 auto;
+}
+
+.btn {
+ display: flex;
+ align-items: center;
+ justify-content: center;
+ width: 100%;
+ font-family: inherit;
+ font-size: 28px;
+ border-radius: var(--radius);
+ cursor: pointer;
+ border: 2px solid transparent;
+}
+.btn-primary {
+ min-height: 92px; /* 主按钮 ≥ 88px（P3） */
+ background: #1c3f8f;
+ color: #fff;
+ font-weight: 700;
+}
+.btn-primary[disabled] {
+ background: #9aa2b6;
+}
+.btn-secondary {
+ min-height: 68px; /* 次按钮 ≥ 64px（P3） */
+ background: var(--card);
+ color: var(--ink);
+ border-color: var(--line-strong);
+ font-size: 25px;
+}
+.btn-ghost {
+ min-height: 68px;
+ background: transparent;
+ color: var(--ink-2);
+ border-color: var(--line-strong);
+ font-size: 24px;
+}
+.row2 {
+ display: flex;
+ gap: 12px;
+ margin-top: 12px;
+}
+.row2 .btn {
+ flex: 1 1 0;
+}
+
+.paste {
+ margin-bottom: 12px;
+}
+.paste-label {
+ display: block;
+ font-size: 22px;
+ color: var(--ink-2);
+ margin-bottom: 6px;
+}
+.paste-input {
+ width: 100%;
+ min-height: 132px;
+ font-family: inherit;
+ font-size: 24px;
+ line-height: 1.7;
+ color: var(--ink);
+ background: var(--card);
+ border: 2px solid var(--line-strong);
+ border-radius: var(--radius);
+ padding: 10px 12px;
+ resize: vertical;
+}
+.paste-actions {
+ display: flex;
+ gap: 12px;
+ margin-top: 10px;
+}
+.paste-actions .btn-primary {
+ flex: 2 1 0;
+}
+.paste-actions .btn-ghost {
+ flex: 1 1 0;
+}
+.composer-note {
+ margin: 8px 0 0;
+ font-size: 20px;
+ line-height: 1.6;
+ color: var(--ink-3);
+}
+.composer-note.warnn {
+ color: var(--t-yellow);
+ font-weight: 700;
+}
+
+/* ===== 浮层：覆盖在原界面上，不挤压不重排正文（P9、§8.2） ===== */
+.overlay {
+ position: fixed;
+ inset: 0;
+ z-index: 40;
+ display: flex;
+}
+.overlay[hidden] {
+ display: none;
+}
+/* 浮层开着的时候锁住背后页面：关掉时由 app.js 楜回开之前的滚动位置（P9） */
+body.ov-open {
+ overflow: hidden;
+}
+.ov-backdrop {
+ position: absolute;
+ inset: 0;
+ background: rgba(20, 21, 24, 0.45);
+}
+.ov-panel {
+ position: relative;
+ margin: 22px auto 12px;
+ width: calc(100% - 24px);
+ max-width: 700px;
+ align-self: stretch;
+ background: var(--card);
+ border-radius: 16px;
+ display: flex;
+ flex-direction: column;
+ overflow: hidden;
+ box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
+}
+.ov-head {
+ display: flex;
+ align-items: center;
+ gap: 12px;
+ padding: 10px 14px;
+ border-bottom: 1px solid var(--line);
+}
+.ov-btn {
+ font-family: inherit;
+ font-size: 22px;
+ min-height: var(--tap);
+ padding: 0 16px;
+ border-radius: 10px;
+ border: 2px solid var(--line-strong);
+ background: var(--card);
+ color: var(--ink);
+ cursor: pointer;
+}
+.ov-kicker {
+ font-size: 20px;
+ color: var(--ink-3);
+}
+.ov-body {
+ padding: 12px 16px 20px;
+ overflow-y: auto;
+}
+.ov-sec {
+ margin-bottom: 16px;
+}
+.ov-sec > .k {
+ font-size: 20px;
+ color: var(--ink-3);
+ line-height: 1.5;
+}
+.ov-sec > .v {
+ font-size: 26px;
+ line-height: 1.7;
+ word-break: break-word;
+}
+.ov-sec > .v.big {
+ font-size: 29px;
+ font-weight: 700;
+}
+.ov-sec .sub {
+ font-size: 21px;
+ color: var(--ink-2);
+ line-height: 1.7;
+}
+.ov-strong {
+ background: var(--bg);
+ border-radius: 10px;
+ padding: 10px 12px;
+}
+.ov-list {
+ margin: 6px 0 0;
+ padding-left: 26px;
+ font-size: 23px;
+ line-height: 1.7;
+}
+.ov-ctx {
+ font-size: 23px;
+ line-height: 1.8;
+ background: var(--bg);
+ border-radius: 10px;
+ padding: 10px 12px;
+ white-space: pre-wrap;
+ word-break: break-word;
+}
+.ov-ctx mark {
+ background: #fff2a8;
+ padding: 0 2px;
+}
+.ov-ctx img {
+ display: block;
+ width: 100%;
+ max-height: 200px;
+ object-fit: contain;
+ background: #eaeaea;
+ border-radius: 8px;
+ margin-bottom: 8px;
+}
+
+/* 演示样例列表（在浮层里，不占首屏元素） */
+.sample-list {
+ display: flex;
+ flex-direction: column;
+ gap: 10px;
+}
+.sample-item {
+ font-family: inherit;
+ text-align: left;
+ min-height: var(--tap);
+ padding: 10px 14px;
+ border: 2px solid var(--line-strong);
+ border-radius: var(--radius);
+ background: var(--card);
+ cursor: pointer;
+ font-size: 24px;
+ color: var(--ink);
+}
+.sample-item small {
+ display: block;
+ font-size: 20px;
+ color: var(--ink-3);
+ line-height: 1.6;
+}
+.sample-item .risk-红 {
+ color: var(--t-red);
+ font-weight: 700;
+}
+.sample-item .risk-黄 {
+ color: var(--t-yellow);
+ font-weight: 700;
+}
+.sample-item .risk-绿 {
+ color: var(--t-green);
+ font-weight: 700;
+}
+
+.dev-log {
+ margin-top: 18px;
+ border-top: 1px solid var(--line);
+ padding-top: 10px;
+}
+.dev-log pre {
+ white-space: pre-wrap;
+ word-break: break-all;
+ font-size: 17px;
+ line-height: 1.6;
+ background: var(--bg);
+ border-radius: 8px;
+ padding: 8px;
+ max-height: 320px;
+ overflow: auto;
+}
+
+/* 屏幕阅读器专用 */
+.sr {
+ position: absolute;
+ width: 1px;
+ height: 1px;
+ padding: 0;
+ margin: -1px;
+ overflow: hidden;
+ clip: rect(0 0 0 0);
+ white-space: nowrap;
+ border: 0;
+}

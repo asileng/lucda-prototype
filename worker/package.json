@@ -1,0 +1,12 @@
+{
+  "name": "lucda-worker",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "LuCDA 统一出口：Cloudflare Worker（worker.js）与本机答辩代理（dev-server.mjs）共用同一份实现。",
+  "scripts": {
+    "dev": "node dev-server.mjs",
+    "prompt": "node gen_prompt.mjs",
+    "schema": "node gen_schema.mjs"
+  }
+}

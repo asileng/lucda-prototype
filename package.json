@@ -1,0 +1,27 @@
+{
+  "name": "lucda-prototype",
+  "version": "1.0.0",
+  "private": true,
+  "description": "LuCDA：把可疑的话发进来，看清楚它在做什么，拿到该怎么说。只分析话术怎么骗人，不判断产品真假。",
+  "type": "module",
+  "scripts": {
+    "build": "node tools/build_site.mjs",
+    "serve": "python -m http.server 8080 --bind 127.0.0.1",
+    "dev:api": "node worker/dev-server.mjs",
+    "test": "node tools/taboo_test.mjs && node tools/worker_test.mjs",
+    "test:taboo": "node tools/taboo_test.mjs",
+    "test:worker": "node tools/worker_test.mjs",
+    "test:web": "python tools/shot_web.py",
+    "fig1": "python tools/make_fig1.py",
+    "fig2": "python tools/make_fig2.py",
+    "fig3": "python tools/make_fig3.py"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "comments": {
+    "零依赖": "本仓库不引入任何 npm 依赖。scripts 全部调用 node 内置能力或已装的本机 Python。",
+    "key": "任何 key 都不进本仓库。Worker 的 key 走 wrangler secret（执行指令 §10.1、铁律 12）。",
+    "preview": "npm run build 之后用 npm run serve 预览 docs/；直接双击 html 文件会因为 file:// 取不到 data/*.json。"
+  }
+}

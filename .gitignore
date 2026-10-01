@@ -1,0 +1,35 @@
+# 依赖与缓存
+node_modules/
+__pycache__/
+*.pyc
+*.pyo
+.ruff_cache/
+.wrangler/
+.cache/
+
+# 密钥与本地环境 —— key 绝不进仓库（执行指令 §10.1、铁律 12）
+.env
+.env.*
+*.key
+*.pem
+secrets.json
+.dev.vars
+
+# 系统与编辑器杂物
+.DS_Store
+Thumbs.db
+desktop.ini
+~$*
+*.swp
+*.log
+
+# 本机调试产物（fig 脚本自检时会产生，不属于交付物）
+tools/_p3_*.png
+tools/_vision_probe.png
+tools/_*.tmp
+worker/_probe*.mjs
+worker/_probe*.json
+
+# 临时导出
+tmp/
+_tmp/

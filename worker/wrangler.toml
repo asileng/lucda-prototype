@@ -1,0 +1,19 @@
+# LuCDA 出口 · Cloudflare Workers 配置
+#
+# 密钥不进这个文件：用 `npx wrangler secret put DEEPSEEK_API_KEY`
+# 部署：`npx wrangler deploy`；部署后把地址填进 web/config.js 的 API_BASE（见 README.md）
+
+name = "lucda-prototype"
+main = "worker.js"
+# 与本机的 node / wrangler 版本对齐；改这个日期会改 Workers 运行时行为，没有理由不要动
+compatibility_date = "2026-01-01"
+workers_dev = true
+
+# 环境变量只放与密钥无关的开关；密钥一律走 secret。
+[vars]
+RATE_LIMIT_PER_MINUTE = "10"
+UPSTREAM_TIMEOUT_MS = "100000"
+MAX_OUTPUT_TOKENS = "32000"
+# ALLOWED_ORIGIN 不写，默认 *。GitHub Pages 来源不固定，且本出口不带凭证。
+# 要收紧时取消下一行注释，填自己的 Pages 域名。
+# ALLOWED_ORIGIN = "https://<用户名>.github.io"
