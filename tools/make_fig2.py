@@ -174,7 +174,9 @@ def main():
     出 = 拼版(截图)
     im = Image.open(出)
     print(f"✓ 已生成 {出}")
-    print(f"  尺寸 {im.size}  dpi {im.info.get('dpi')}  大小 {os.path.getsize(出) / 1024:.1f} KB")
+    print(
+        f"  尺寸 {im.size}  dpi {im.info.get('dpi')}  大小 {os.path.getsize(出) / 1024:.1f} KB"
+    )
     return 0
 
 

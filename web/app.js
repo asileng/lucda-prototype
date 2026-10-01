@@ -436,7 +436,9 @@
       if (!m) return;
       var 起 = Number(m[1]);
       var 止 = Number(m[2]);
-      var t = String(原文).slice(Math.max(0, 起 - 1), 止).trim();
+      var t = String(原文)
+        .slice(Math.max(0, 起 - 1), 止)
+        .trim();
       if (t) 出.push(t);
     });
     return 出.join(" … ");

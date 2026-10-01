@@ -135,7 +135,9 @@ def 调模型(密钥, system, user):
     try:
         回答 = d["choices"][0]["message"]["content"]
     except (KeyError, IndexError, TypeError) as e:
-        raise RuntimeError(f"上游返回里没有 choices[0].message.content：{载荷[:300]}") from e
+        raise RuntimeError(
+            f"上游返回里没有 choices[0].message.content：{载荷[:300]}"
+        ) from e
     return 回答, {"模型": 模型名, "耗时毫秒": 用时, "用量": d.get("usage")}
 
 
@@ -261,7 +263,9 @@ def 截_lucda():
         地址 = 等就绪(端口, "docs/index.html")
         with sync_playwright() as pw:
             br = pw.chromium.launch()
-            pg = br.new_page(viewport={"width": 390, "height": 844}, device_scale_factor=3)
+            pg = br.new_page(
+                viewport={"width": 390, "height": 844}, device_scale_factor=3
+            )
             pg.goto(地址, wait_until="load")
             pg.wait_for_timeout(1800)
             pg.evaluate("() => window.LuCDA_UI.载入样例('demo-01','')")
@@ -385,7 +389,9 @@ def 拼图(数据, lucda_png):
     )
 
     页 = (
-        模板.replace("__COL_A__", 一栏("① 直接问通用助手", 路径说明[0]["说明"], 输入, a))
+        模板.replace(
+            "__COL_A__", 一栏("① 直接问通用助手", 路径说明[0]["说明"], 输入, a)
+        )
         .replace("__COL_B__", 一栏("② 事实核查式提问", 路径说明[1]["说明"], 输入, b))
         .replace("__COL_C__", 栏C)
         .replace("__LUC__", "file:///" + lucda_png.replace("\\", "/"))
@@ -395,7 +401,9 @@ def 拼图(数据, lucda_png):
     写文本(h, 页)
     with sync_playwright() as pw:
         br = pw.chromium.launch()
-        pg = br.new_page(viewport={"width": 1780, "height": 1200}, device_scale_factor=2)
+        pg = br.new_page(
+            viewport={"width": 1780, "height": 1200}, device_scale_factor=2
+        )
         pg.goto("file:///" + h.replace("\\", "/"), wait_until="load")
         pg.wait_for_timeout(900)
         pg.screenshot(path=产物, full_page=True)

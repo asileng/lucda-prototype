@@ -37,3 +37,8 @@ _tmp/
 # 备份文件
 *.bak
 *.orig
+
+# 会话导出（体积大且含整场对话，不随仓库发布）
+session-export.html
+session-*.html
+session-*.jsonl

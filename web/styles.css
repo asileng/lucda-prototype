@@ -14,9 +14,9 @@
 
 :root {
   /* 尺寸硬指标（P3）——验收脚本直接量这些值 */
-  --tap-main: 88px;   /* 主按钮高 */
-  --tap-min: 64px;    /* 任意可点热区最小高 */
-  --fs-body: 24px;    /* 回复正文 */
+  --tap-main: 88px; /* 主按钮高 */
+  --tap-min: 64px; /* 任意可点热区最小高 */
+  --fs-body: 24px; /* 回复正文 */
   --fs-conclusion: 28px; /* 结论行 */
 
   /* 色板：柔和中性底 + 深青绿主色（沉着、不刺眼，与"反诈"的信任感相称） */
@@ -56,16 +56,17 @@
   --r-sm: 12px;
   --sh-1: 0 1px 2px rgba(15, 23, 42, 0.05);
   --sh-2: 0 2px 8px rgba(15, 23, 42, 0.05), 0 1px 2px rgba(15, 23, 42, 0.04);
-  --sh-3: 0 12px 32px rgba(15, 23, 42, 0.10), 0 2px 8px rgba(15, 23, 42, 0.05);
+  --sh-3: 0 12px 32px rgba(15, 23, 42, 0.1), 0 2px 8px rgba(15, 23, 42, 0.05);
   --sh-4: 0 24px 64px rgba(15, 23, 42, 0.22);
 
   --gap: 16px;
   --pad: 20px;
   --maxw: 720px;
 
-  --font: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
-    "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans CJK SC", "Source Han Sans SC",
-    system-ui, sans-serif;
+  --font:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+    "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans CJK SC",
+    "Source Han Sans SC", system-ui, sans-serif;
 }
 
 /* ============ 2. 基础 ============ */
@@ -192,7 +193,9 @@ ol {
   background: var(--brand-tint);
   border: 1px solid transparent;
   border-radius: var(--r-pill);
-  transition: background 0.18s ease, transform 0.18s ease;
+  transition:
+    background 0.18s ease,
+    transform 0.18s ease;
 }
 
 .top-btn:hover {
@@ -325,7 +328,10 @@ ol {
   border-left: 4px solid var(--slate);
   border-radius: var(--r-btn);
   box-shadow: var(--sh-1);
-  transition: transform 0.16s ease, box-shadow 0.16s ease, background 0.16s ease;
+  transition:
+    transform 0.16s ease,
+    box-shadow 0.16s ease,
+    background 0.16s ease;
 }
 
 .blk:hover {
@@ -525,7 +531,10 @@ ol {
   background: var(--surface-2);
   border: 1px solid var(--line);
   border-radius: var(--r-btn);
-  transition: background 0.16s ease, border-color 0.16s ease, transform 0.16s ease;
+  transition:
+    background 0.16s ease,
+    border-color 0.16s ease,
+    transform 0.16s ease;
 }
 
 .q-item:hover {
@@ -748,7 +757,10 @@ ol {
   background: #fff;
   border: 1.5px solid var(--line-2);
   border-radius: var(--r-pill);
-  transition: border-color 0.16s ease, background 0.16s ease, transform 0.16s ease;
+  transition:
+    border-color 0.16s ease,
+    background 0.16s ease,
+    transform 0.16s ease;
 }
 
 .choice:hover {
@@ -895,7 +907,9 @@ ol {
   background: #fff;
   border: 1px solid var(--line-2);
   border-radius: var(--r-sm);
-  transition: border-color 0.16s ease, background 0.16s ease;
+  transition:
+    border-color 0.16s ease,
+    background 0.16s ease;
 }
 
 .ev-link:hover {
@@ -1005,7 +1019,9 @@ body.ov-open {
   background: #fff;
   border: 1px solid var(--line-2);
   border-radius: var(--r-pill);
-  transition: background 0.16s ease, border-color 0.16s ease;
+  transition:
+    background 0.16s ease,
+    border-color 0.16s ease;
 }
 
 .ov-btn:hover {
@@ -1131,7 +1147,10 @@ body.ov-open {
   background: var(--surface-2);
   border: 1px solid var(--line);
   border-radius: var(--r-btn);
-  transition: background 0.16s ease, border-color 0.16s ease, transform 0.16s ease;
+  transition:
+    background 0.16s ease,
+    border-color 0.16s ease,
+    transform 0.16s ease;
 }
 
 .sample-item:hover {
@@ -1227,7 +1246,10 @@ body.ov-open {
   border: 1px solid transparent;
   border-radius: var(--r-btn);
   font-weight: 700;
-  transition: transform 0.16s ease, box-shadow 0.16s ease, background 0.16s ease,
+  transition:
+    transform 0.16s ease,
+    box-shadow 0.16s ease,
+    background 0.16s ease,
     border-color 0.16s ease;
 }
 
@@ -1311,7 +1333,9 @@ body.ov-open {
   border: 1.5px solid var(--line-2);
   border-radius: var(--r-sm);
   resize: vertical;
-  transition: border-color 0.16s ease, background 0.16s ease;
+  transition:
+    border-color 0.16s ease,
+    background 0.16s ease;
 }
 
 .paste-input::placeholder {
