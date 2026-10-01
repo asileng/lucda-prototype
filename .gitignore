@@ -33,3 +33,7 @@ worker/_probe*.json
 # 临时导出
 tmp/
 _tmp/
+
+# 备份文件
+*.bak
+*.orig
