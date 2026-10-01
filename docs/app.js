@@ -422,6 +422,31 @@
 
   /* ================= 5. 锚点：从结果里切出色块（§6.5 证据、§8.1 锚点） ================= */
 
+  /* 证据位置 → 可读片段。
+     区间口径 = **按人话数：1 起、含尾（闭区间）**，即「1-8」指第 1 个字到第 8 个字。
+     实测依据：20 条文本锚点里有 8 条起始下标写的是 1，而它前面那个字符每次都是实打实的
+     首字（阿 / 小 / 药 / 推）——按 0 起切会系统性丢掉每段引文的第一个字。
+     位置可能是多段的（例如「1-8, 39-48」），逐段取完用「…」连起来。 */
+  function 区间取文(位置, 原文) {
+    var s = String(位置 || "");
+    if (!s || !原文) return "";
+    var 出 = [];
+    s.split(/[,，;；]/).forEach((段) => {
+      var m = /^\s*(\d+)\s*[-\u2013\u2014~]\s*(\d+)\s*$/.exec(段);
+      if (!m) return;
+      var 起 = Number(m[1]);
+      var 止 = Number(m[2]);
+      var t = String(原文).slice(Math.max(0, 起 - 1), 止).trim();
+      if (t) 出.push(t);
+    });
+    return 出.join(" … ");
+  }
+
+  /* 看上去只是一串位置数字，不是能念给人听的引文。 */
+  function 是位置串(s) {
+    return /^[\s\d,，;；\-\u2013\u2014~]+$/.test(String(s || ""));
+  }
+
   function 证据归位(证据, 原文, 模态) {
     if (证据 && typeof 证据 === "object") {
       return {
@@ -437,7 +462,7 @@
     if (!m) return { 位置: s, 片段: "", 观察: [] };
     var a = Number(m[1]);
     var b = Number(m[2]);
-    if (模态 === "text") return { 位置: s, 片段: 原文.slice(a, b), 观察: [] };
+    if (模态 === "text") return { 位置: s, 片段: 区间取文(s, 原文), 观察: [] };
     if (模态 === "audio")
       return { 位置: s, 片段: 时间轴取文(原文, a, b), 观察: [] };
     return { 位置: s, 片段: "", 观察: [] };
@@ -458,6 +483,32 @@
       if (e > a && s < b && m[3]) 出.push(m[3].trim());
     });
     return 出.join(" ");
+  }
+
+  /* 样例锚点的 标签 是拼好的字符串，这里把字段拆回来。三种形态：
+       「事件层 · 促成即时购买」
+       「话语层 · 情绪引导：用「亲妈」唤起归属感…」
+       「说服杠杆层 · 喜好 · 强度 3 · 正在施放」 */
+  function 拆标签(标签) {
+    var 出 = { 杠杆: "", 强度: undefined, 归属: "", 维度: "", 语用目标: "" };
+    var 段 = String(标签 || "")
+      .split("·")
+      .map((s) => s.trim())
+      .filter(Boolean);
+    if (段.length < 2) return 出;
+    if (段[0] === "事件层") {
+      出.语用目标 = 段[1].split(/[：:]/)[0].trim();
+    } else if (段[0] === "话语层") {
+      出.维度 = 段[1].split(/[：:]/)[0].trim();
+    } else if (段[0] === "说服杠杆层") {
+      出.杠杆 = 段[1];
+      for (var i = 2; i < 段.length; i++) {
+        var m = /强度\s*(\d+)/.exec(段[i]);
+        if (m) 出.强度 = Number(m[1]);
+        if (/正在施放|已对我生效/.test(段[i])) 出.归属 = 段[i];
+      }
+    }
+    return 出;
   }
 
   /* 样例自带 色块锚点；联网结果没有，就从三层里派生。两路产出同一种形状。 */
@@ -489,15 +540,31 @@
           : /话语/.test(a.标签)
             ? "话语层"
             : "事件层";
+        // 样例里的 标签 是拼好的字符串（如「说服杠杆层 · 喜好 · 强度 3 · 正在施放」）。
+        // 必须把字段拆回来：老人档浮层的「这句在干什么」直接读 杠杆 / 维度 / 语用目标，
+        // 不拆就会渲染成「他说到了「」」这种空壳（执行指令 §8.3 要求 ≤12 字的实指）。
+        var 拆 = 拆标签(a.标签);
+        // 样例里的 片段 可能是空的，或干脆存的是位置串（多段证据的情况，例如「1-8, 39-48」）。
+        // 那样直接展示等于给用户看一串数字。这种情况就从 位置 现取原文。
+        var 原片段 = String(a.片段 || "");
+        var 用片段 = 原片段;
+        if (!用片段.trim() || 是位置串(用片段)) {
+          用片段 = 区间取文(a.位置, 原文);
+        }
         出.push({
           层: 层,
           标签: String(a.标签 || ""),
           说话人: a.说话人 || "",
           位置: String(a.位置 || ""),
-          片段: String(a.片段 || ""),
+          片段: 用片段,
           观察: Array.isArray(a.观察) ? a.观察.slice() : [],
           来源字段: a.来源字段 || "锚点[" + i + "]",
           色: a.色 || 风险,
+          杠杆: a.杠杆 || 拆.杠杆 || "",
+          强度: a.强度 === undefined ? 拆.强度 : a.强度,
+          归属: a.归属 || 拆.归属 || "",
+          维度: a.维度 || 拆.维度 || "",
+          语用目标: a.语用目标 || 拆.语用目标 || "",
         });
       });
       return 出;
@@ -587,10 +654,9 @@
     if (/^.{0,3}(说|讲|告诉|问|念叨|宣称)/.test(片段)) return true;
     var m = /^(\d+)/.exec(String(锚.位置 || ""));
     if (!m) return false;
-    var 前 = String(原文 || "").slice(
-      Math.max(0, Number(m[1]) - 10),
-      Number(m[1]),
-    );
+    // 位置是 1 起数，所以它前面那段文字的 0 起下标是 起-2
+    var 起 = Number(m[1]) - 1;
+    var 前 = String(原文 || "").slice(Math.max(0, 起 - 10), 起);
     return /(说|讲|告诉|问|念叨|宣称)/.test(前);
   }
 
@@ -725,9 +791,33 @@
     return s;
   }
 
+  /* 线性图标：用 DOM API 建 SVG，不走 innerHTML（不引入 XSS 面）。
+     路径 d 都是写死的常量，不含任何用户数据。 */
+  var SVGNS = "http://www.w3.org/2000/svg";
+  function 图标节点(路径) {
+    var svg = document.createElementNS(SVGNS, "svg");
+    svg.setAttribute("viewBox", "0 0 24 24");
+    svg.setAttribute("aria-hidden", "true");
+    路径.forEach((d) => {
+      var p = document.createElementNS(SVGNS, "path");
+      p.setAttribute("d", d);
+      svg.appendChild(p);
+    });
+    return svg;
+  }
+
   function 朗读按钮(text) {
-    var b = h("button", "ov-btn", "🔊 念一遍");
+    var b = h("button", "ov-btn");
     b.type = "button";
+    加(
+      b,
+      图标节点([
+        "M4 9.4h3.1L12 5.2v13.6L7.1 14.6H4z",
+        "M15.4 9.3a4 4 0 0 1 0 5.4",
+        "M17.9 6.7a7.5 7.5 0 0 1 0 10.6",
+      ]),
+    );
+    加(b, h("span", null, "念一遍"));
     b.addEventListener("click", () => {
       朗读(text);
     });
@@ -859,12 +949,13 @@
       加(wrap, h("div", "sub", "这条证据只给了位置，取不到前后文。"));
       return wrap;
     }
-    var a = Number(m[1]);
-    var b = Number(m[2]);
+    // 位置是 1 起、含尾，转成 0 起下标：起-1，尾不变（slice 右开）
+    var 起 = Math.max(0, Number(m[1]) - 1);
+    var 止 = Number(m[2]);
     var 原文 = String(turn.原文 || "");
-    var 前 = 原文.slice(Math.max(0, a - 18), a);
-    var 中 = 原文.slice(a, b);
-    var 后 = 原文.slice(b, b + 18);
+    var 前 = 原文.slice(Math.max(0, 起 - 18), 起);
+    var 中 = 原文.slice(起, 止);
+    var 后 = 原文.slice(止, 止 + 18);
     var line = h("div", "ov-ctx");
     加(line, document.createTextNode(前));
     var mk = h("mark", null, 中);

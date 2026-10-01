@@ -19,7 +19,7 @@
         },
         "证据单位": {
           "enum": ["原文", "时间轴", "区域"],
-          "description": "text→原文（字符区间）；audio→时间轴（起止秒）；image→区域（坐标）。映射见 §6.5 表。"
+          "description": "text→原文（字符区间，从 1 开始数、含首含尾，如「1-8」= 前 8 个字；多段用逗号分隔）；audio→时间轴（起止秒）；image→区域（坐标）。映射见 §6.5 表。"
         }
       },
       "allOf": [
@@ -342,7 +342,7 @@
       "type": "object",
       "additionalProperties": false,
       "required": ["位置", "片段"],
-      "description": "复合证据。位置用 meta.证据单位 计量：文本=字符区间；语音=起止秒；图片=区域坐标。",
+      "description": "复合证据。位置用 meta.证据单位 计量：文本=字符区间（1 起、含首含尾）；语音=起止秒；图片=区域坐标。",
       "properties": {
         "位置": {
           "type": "string",

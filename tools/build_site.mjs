@@ -61,9 +61,19 @@ async function main() {
     process.exit(1);
   }
 
-  // 清空 docs/（保留 docs/ 自身），保证可重复执行、不留残渣
-  await rm(DOCS, { recursive: true, force: true });
+  // 清空 docs/ 的**内容**，但保留 docs/ 目录自身。
+  // 为什么不用 rm(DOCS)：Windows 上如果有别的进程（编辑器、文件监视、残留的
+  // 静态服务器）开着 docs/ 里的文件或把 docs/ 当工作目录，rmdir 会 EBUSY，
+  // 整个构建就白跑。逐个删文件能把失败范围缩到单个文件，而且能重试。
   await mkdir(DOCS, { recursive: true });
+  for (const e of await readdir(DOCS)) {
+    await rm(path.join(DOCS, e), {
+      recursive: true,
+      force: true,
+      maxRetries: 5,
+      retryDelay: 200,
+    });
+  }
 
   // 1. web/ → docs/
   await cp(WEB, DOCS, { recursive: true });
